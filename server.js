@@ -1,20 +1,25 @@
 const express = require("express");
-const multer = require("multer");
 const sharp = require("sharp");
 
-const upload = multer();
 const app = express();
 
-app.post("/grayscale", upload.single("image"), async (req, res) => {
+// Middleware: aceita corpo binário de imagens até 10MB
+app.use(express.raw({ type: 'image/*', limit: '10mb' }));
+
+app.post("/grayscale", async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).send("Envie um arquivo no campo 'image'.");
+    if (!req.body || !req.body.length) {
+      return res.status(400).send("Nenhuma imagem recebida.");
     }
 
-    const mode = req.query.mode;   // ?mode=mono → preto e branco puro
+    const buffer = req.body;
+
+    // Query params: ?mode=mono → preto e branco puro
+    // ?format=png|jpeg|webp → formato da saída
+    const mode = req.query.mode;
     const format = (req.query.format || "png").toLowerCase();
 
-    let img = sharp(req.file.buffer).grayscale();
+    let img = sharp(buffer).grayscale();
     if (mode === "mono") {
       img = img.threshold(128);
     }
