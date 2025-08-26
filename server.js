@@ -14,29 +14,34 @@ app.post("/grayscale", async (req, res) => {
 
     const buffer = req.body;
 
-    // Query params: ?mode=mono → preto e branco puro
+    // Query params:
+    // ?mode=mono → preto e branco puro
     // ?format=png|jpeg|webp → formato da saída
     const mode = req.query.mode;
     const format = (req.query.format || "png").toLowerCase();
 
+    // Converte para grayscale
     let img = sharp(buffer).grayscale();
     if (mode === "mono") {
-      img = img.threshold(128);
+      img = img.threshold(128); // binário preto/branco puro
     }
 
+    // Ajuste de qualidade para cada formato
     let mime = "image/png";
     if (format === "jpeg" || format === "jpg") {
-      img = img.jpeg();
+      img = img.jpeg({ quality: 100 });   // JPEG qualidade máxima
       mime = "image/jpeg";
     } else if (format === "webp") {
-      img = img.webp();
+      img = img.webp({ quality: 100 });   // WEBP qualidade máxima
       mime = "image/webp";
     } else {
-      img = img.png();
+      img = img.png({ compressionLevel: 0, quality: 100 }); // PNG sem compressão
       mime = "image/png";
     }
 
+    // Gera buffer final
     const output = await img.toBuffer();
+
     res.set("Content-Type", mime);
     res.send(output);
   } catch (err) {
